@@ -1,0 +1,430 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Ccircle cx='8' cy='8' r='7' fill='%23FDB813'/%3E%3C/svg%3E">
+<title>solarscale — parametric solar-system scale models</title>
+<style>
+  :root {
+    --bg: #0e1116; --panel: #161b22; --border: #232a33;
+    --text: #e8eaed; --muted: #8a919e; --accent: #6ea8fe;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: var(--bg); color: var(--text);
+    font: 15px/1.5 system-ui, -apple-system, "Segoe UI", sans-serif;
+  }
+  header { padding: 28px 32px 8px; }
+  h1 { font-size: 22px; margin: 0; font-weight: 650; letter-spacing: .3px; }
+  h1 span { color: var(--muted); font-weight: 400; }
+  header p { color: var(--muted); margin: 4px 0 0; font-size: 13.5px; }
+  header a { color: var(--accent); text-decoration: none; }
+  main {
+    display: grid; grid-template-columns: 340px 1fr;
+    gap: 16px; padding: 16px 32px 8px; align-items: start;
+  }
+  @media (max-width: 900px) { main { grid-template-columns: 1fr; } }
+  .panel {
+    background: var(--panel); border: 1px solid var(--border);
+    border-radius: 10px; padding: 18px;
+  }
+  .panel h2 {
+    font-size: 13px; text-transform: uppercase; letter-spacing: .12em;
+    color: var(--muted); margin: 0 0 12px; font-weight: 600;
+  }
+  label { display: block; font-size: 13px; color: var(--muted); margin: 12px 0 4px; }
+  input[type="number"], select {
+    background: var(--bg); color: var(--text); border: 1px solid var(--border);
+    border-radius: 6px; padding: 7px 9px; font: inherit; width: 100%;
+  }
+  .row { display: flex; gap: 8px; } .row > * { flex: 1; }
+  .anchor { display: flex; gap: 14px; margin: 2px 0 4px; }
+  .anchor label {
+    display: flex; gap: 6px; align-items: center; margin: 0;
+    color: var(--text); cursor: pointer; font-size: 13.5px;
+  }
+  .checks label {
+    display: flex; gap: 8px; align-items: center; margin: 8px 0;
+    color: var(--text); cursor: pointer;
+  }
+  .checks input, .anchor input { accent-color: var(--accent); width: 15px; height: 15px; }
+  table { border-collapse: collapse; width: 100%; font-size: 14px; }
+  th, td { text-align: left; padding: 7px 10px; border-bottom: 1px solid var(--border); }
+  th { color: var(--muted); font-weight: 600; font-size: 12px; text-transform: uppercase; letter-spacing: .08em; }
+  td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; }
+  tr.dwarf td { color: var(--muted); }
+  tfoot td { border-bottom: none; color: var(--muted); font-size: 12.5px; }
+  #posterWrap { overflow-x: auto; border: 1px solid var(--border); border-radius: 8px; }
+  #posterWrap svg { display: block; width: 100%; height: auto; }
+  .actions { margin-top: 14px; display: flex; gap: 10px; align-items: center; }
+  button {
+    background: var(--accent); color: #0b1020; border: none; border-radius: 7px;
+    padding: 9px 16px; font: 600 14px/1 system-ui; cursor: pointer;
+  }
+  button:hover { filter: brightness(1.08); }
+  .actions span { color: var(--muted); font-size: 12.5px; }
+  footer { color: var(--muted); font-size: 12.5px; padding: 18px 32px 30px; }
+</style>
+</head>
+<body>
+<header>
+  <h1>solarscale <span>· parametric solar-system scale models</span></h1>
+  <p>If the Sun were a basketball, where would the planets be — and how big?
+     Static file, runs offline, nothing leaves this page.
+     <a href="https://github.com/p2plus/solarscale">source &amp; tests</a></p>
+</header>
+<main>
+  <section class="panel">
+    <h2>Scale</h2>
+    <div class="anchor">
+      <label><input type="radio" name="anchor" value="sun" checked> Sun ball</label>
+      <label><input type="radio" name="anchor" value="au"> 1 AU distance</label>
+    </div>
+    <div class="row">
+      <div>
+        <label for="anchorValue" id="anchorLabel">Sun diameter</label>
+        <input type="number" id="anchorValue" value="22" min="0.001" step="any">
+      </div>
+      <div>
+        <label for="anchorUnit">Unit</label>
+        <select id="anchorUnit">
+          <option>cm</option><option>m</option><option>mm</option>
+          <option>in</option><option>ft</option><option>km</option>
+        </select>
+      </div>
+    </div>
+    <label for="speed">Walking speed (km/h)</label>
+    <input type="number" id="speed" value="5" min="0.1" step="any">
+    <h2 style="margin-top:20px">Bodies &amp; honesty</h2>
+    <div class="checks">
+      <label><input type="checkbox" id="dwarfs"> Dwarf planets (Ceres … Eris)</label>
+      <label><input type="checkbox" id="kuiper"> Kuiper belt band</label>
+      <label><input type="checkbox" id="oort"> Oort-cloud annotation</label>
+      <label><input type="checkbox" id="trueSizes"> True body sizes (tiny dots)</label>
+      <label><input type="checkbox" id="trueDist"> True distances (real emptiness)</label>
+    </div>
+    <h2 style="margin-top:20px">Poster</h2>
+    <label for="size">Page size</label>
+    <select id="size">
+      <option value="1123x794">A4 landscape</option>
+      <option value="1587x1123">A3 landscape</option>
+      <option value="1600x900">Screen 16:9</option>
+    </select>
+  </section>
+
+  <div>
+    <section class="panel">
+      <h2 id="tableTitle">Walk model</h2>
+      <div style="overflow-x:auto">
+        <table id="table">
+          <thead><tr>
+            <th>Body</th><th class="num">Model size</th>
+            <th class="num">Distance from Sun</th><th class="num">Walk time</th>
+          </tr></thead>
+          <tbody id="tbody"></tbody>
+          <tfoot><tr><td colspan="4" id="tfoot"></td></tr></tfoot>
+        </table>
+      </div>
+    </section>
+    <section class="panel" style="margin-top:16px">
+      <h2>Poster</h2>
+      <div id="posterWrap"></div>
+      <div class="actions">
+        <button id="download">Download SVG</button>
+        <span id="dims"></span>
+      </div>
+    </section>
+  </div>
+</main>
+<footer>
+  Works offline — keep this file on a USB stick if you like. Log-scaled by
+  default because a true-scale poster of the Solar System is 99.99997%
+  empty; tick the honesty boxes for the brutal versions. Data: NASA
+  planetary fact sheet (mean radii, semi-major axes). MIT license.
+</footer>
+
+<script>
+/*CORE-START*/
+"use strict";
+const VERSION = "0.1.0";
+const AU_MKM = 149.6;            // millions of km per astronomical unit
+const OORT_AU = 100000;          // outer-edge approximation
+const KUIPER_AU = [30, 50];
+const SUN_DIA_KM = 1392700;      // twice the 695,700 km radius
+
+// name, mean radius (km), semi-major axis (millions of km), color
+const BODIES = [
+  { name: "Sun",     r: 695700, a: 0,       color: "#FDB813" },
+  { name: "Mercury", r: 2439.7, a: 57.9,    color: "#B1ACB4" },
+  { name: "Venus",   r: 6051.8, a: 108.2,   color: "#E8CDA0" },
+  { name: "Earth",   r: 6371.0, a: 149.6,   color: "#6EA8FE" },
+  { name: "Mars",    r: 3389.5, a: 227.9,   color: "#E07A5F" },
+  { name: "Jupiter", r: 69911,  a: 778.5,   color: "#D9A066" },
+  { name: "Saturn",  r: 58232,  a: 1433.5,  color: "#E6C99A" },
+  { name: "Uranus",  r: 25362,  a: 2872.5,  color: "#9AD1D4" },
+  { name: "Neptune", r: 24622,  a: 4495.1,  color: "#5B8DEF" },
+];
+const DWARFS = [
+  { name: "Ceres",   r: 469.7,  a: 413.7,   color: "#9FA6B2" },
+  { name: "Pluto",   r: 1188.3, a: 5906.4,  color: "#C9B8A8" },
+  { name: "Haumea",  r: 780,    a: 6452.0,  color: "#D8D8E8" },
+  { name: "Makemake",r: 715,    a: 6785.7,  color: "#D8A08C" },
+  { name: "Eris",    r: 1163,   a: 10125.0, color: "#E3E8F0" },
+];
+
+const UNITS = { mm: 1e-3, cm: 1e-2, m: 1, km: 1e3, in: 0.0254, inch: 0.0254, ft: 0.3048, feet: 0.3048 };
+
+function esc(s) {
+  return String(s).replace(/[&<>"']/g,
+    c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&apos;" }[c]));
+}
+
+function groupThousands(n) {
+  return String(Math.round(n)).replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+}
+
+function parseLength(value, unit) {
+  const v = Number(value);
+  if (!isFinite(v) || v <= 0) throw new Error("length must be a positive number");
+  const f = UNITS[String(unit).toLowerCase()];
+  if (!f) throw new Error(`unknown unit: ${unit}`);
+  return v * f;   // meters
+}
+
+// Anchor 'sun': the Sun's DIAMETER is `meters` in the model.
+// Anchor 'au' : the Sun–Earth distance is `meters` in the model.
+function makeScale(anchor, meters) {
+  if (meters <= 0 || !isFinite(meters)) throw new Error("anchor must be positive");
+  const kmPerMeter = anchor === "sun" ? SUN_DIA_KM / meters
+                   : anchor === "au"  ? AU_MKM * 1e6 / meters
+                   : (() => { throw new Error(`unknown anchor: ${anchor}`); })();
+  return {
+    diameterM: km => km / kmPerMeter,      // real km → model meters
+    distM: aMkm => aMkm * 1e6 / kmPerMeter,
+  };
+}
+
+function fmtLen(m) {
+  if (!isFinite(m) || m < 0) throw new Error("bad length");
+  if (m < 0.01) return `${(m * 1000).toFixed(1)} mm`;
+  if (m < 1)    return `${(m * 100).toFixed(1)} cm`;
+  if (m < 1000) return m < 100 ? `${m.toFixed(2)} m` : `${m.toFixed(1)} m`;
+  const km = m / 1000;
+  return km < 10 ? `${km.toFixed(2)} km` : `${groupThousands(km)} km`;
+}
+
+function fmtWalk(m, kmh) {
+  if (!(kmh > 0)) throw new Error("speed must be positive");
+  const s = m / (kmh / 3.6);
+  if (s < 60)   return `${Math.round(s)}s`;
+  if (s < 3600) return `${Math.round(s / 60)} min`;
+  return `${Math.floor(s / 3600)}h ${String(Math.floor((s % 3600) / 60)).padStart(2, "0")}min`;
+}
+
+function allBodies(includeDwarfs) {
+  return includeDwarfs
+    ? [...BODIES.slice(0, 1), ...sortBodies([...BODIES.slice(1), ...DWARFS])]
+    : [...BODIES];
+}
+function sortBodies(arr) { return [...arr].sort((x, y) => x.a - y.a); }
+
+// Poster geometry ------------------------------------------------------
+function posterGeom(opts) {
+  const W = opts.width, H = opts.height;
+  const bodies = allBodies(opts.dwarfs);
+  const orbiters = bodies.filter(b => b.a > 0);
+  const aMin = Math.min(...orbiters.map(b => b.a)) / AU_MKM;
+  let aMax = Math.max(...orbiters.map(b => b.a)) / AU_MKM;
+  if (opts.kuiper) aMax = Math.max(aMax, KUIPER_AU[1] * 1.04);
+  const x0 = 0.17 * W, x1 = 0.93 * W, baseline = 0.55 * H;
+  const pos = au => opts.trueDist
+    ? x0 + (x1 - x0) * (au / aMax)
+    : x0 + (x1 - x0) * (Math.log10(au) - Math.log10(aMin)) / (Math.log10(aMax) - Math.log10(aMin));
+
+  const planets = orbiters;
+  const rMin = Math.min(...planets.map(b => b.r));
+  const rMax = Math.max(...planets.map(b => b.r));   // Jupiter
+  const sizes = new Map();
+  for (const b of planets) {
+    sizes.set(b.name, opts.trueSizes
+      ? (b.r / 69911) * 9
+      : 3.5 + 10.5 * (Math.log10(b.r) - Math.log10(rMin)) / (Math.log10(rMax) - Math.log10(rMin)));
+  }
+  const sunR = opts.trueSizes ? (695700 / 69911) * 9 : 0.085 * W;
+  return { W, H, bodies, orbiters, aMin, aMax, x0, x1, baseline, pos, sizes, sunR };
+}
+
+function buildPosterSvg(opts) {
+  const o = posterGeom(opts);
+  const parts = [];
+  const tag = (t, attrs, inner) => {
+    const a = Object.entries(attrs).map(([k, v]) => ` ${k}="${esc(v)}"`).join("");
+    parts.push(inner === undefined ? `<${t}${a}/>` : `<${t}${a}>${inner}</${t}>`);
+  };
+
+  tag("rect", { x: 0, y: 0, width: o.W, height: o.H, fill: "#0e1116" });
+
+  const sizeNote = opts.trueSizes ? "true body sizes" : "log\u2081\u2080 body sizes";
+  const distNote = opts.trueDist ? "true distances — mostly emptiness" : "log\u2081\u2080 distances";
+  tag("text", { x: 34, y: 54, fill: "#e8eaed", "font-size": 21,
+                "font-weight": 650, "font-family": "system-ui, sans-serif" },
+      esc("The Solar System, to scale-ish"));
+  tag("text", { x: 34, y: 76, fill: "#8a919e", "font-size": 11.5,
+                "font-family": "system-ui, sans-serif" },
+      esc(`${sizeNote} · ${distNote} · solarscale ${VERSION}`));
+
+  // Sun: a big arc bleeding off the left edge (or true-sized dot)
+  const sunCx = -o.sunR * 0.55, sunCy = o.baseline;
+  tag("circle", { cx: sunCx, cy: sunCy, r: o.sunR + 16, fill: "#FDB813", opacity: 0.12 });
+  tag("circle", { cx: sunCx, cy: sunCy, r: o.sunR, fill: "#FDB813" });
+  tag("text", { x: o.sunR * 0.28, y: sunCy - o.sunR - 12, fill: "#8a919e",
+                "font-size": 10.5, "font-family": "system-ui, sans-serif" },
+      esc(`Sun · Ø ${groupThousands(SUN_DIA_KM)} km`));
+
+  // Distance axis + AU ticks
+  tag("line", { x1: o.x0 - 20, y1: o.baseline, x2: o.x1, y2: o.baseline,
+                stroke: "#2a2f3a", "stroke-width": 1.5 });
+  for (const t of [0.5, 1, 2, 5, 10, 20, 50, 100]) {
+    if (t < o.aMin * 0.75 || t > o.aMax * 1.15) continue;
+    const x = o.pos(t);
+    tag("line", { x1: x, y1: o.baseline - 5, x2: x, y2: o.baseline + 5, stroke: "#2a2f3a" });
+    tag("text", { x: x, y: o.baseline + 20, "text-anchor": "middle", fill: "#8a919e",
+                  "font-size": 10, "font-family": "system-ui, sans-serif" },
+        esc(`${t} AU`));
+  }
+
+  if (opts.kuiper) {
+    const kx0 = o.pos(KUIPER_AU[0]), kx1 = o.pos(KUIPER_AU[1]);
+    tag("rect", { x: kx0, y: o.baseline - 28, width: kx1 - kx0, height: 56,
+                  rx: 8, fill: "#ffffff", opacity: 0.05 });
+    tag("text", { x: (kx0 + kx1) / 2, y: o.baseline - 34, "text-anchor": "middle",
+                  fill: "#8a919e", "font-size": 9.5, "font-family": "system-ui, sans-serif" },
+        esc("Kuiper belt"));
+  }
+
+  // Bodies
+  o.orbiters.forEach((b, i) => {
+    const x = o.pos(b.a / AU_MKM), r = o.sizes.get(b.name);
+    tag("circle", { cx: x, cy: o.baseline, r: r, fill: b.color });
+    if (b.name === "Saturn") {
+      tag("ellipse", { cx: x, cy: o.baseline, rx: r * 2.2, ry: r * 0.8,
+                       fill: "none", stroke: b.color, "stroke-width": 1,
+                       opacity: 0.65, transform: `rotate(-18 ${x} ${o.baseline})` });
+    }
+    const up = i % 2 === 0, dir = up ? -1 : 1;
+    const yLine = o.baseline + dir * (r + (up ? 0 : 26));
+    const yName = o.baseline + dir * (r + (up ? 22 : 48));
+    const yDia  = o.baseline + dir * (r + (up ? 36 : 62));
+    tag("line", { x1: x, y1: o.baseline + dir * (r + 2), x2: x, y2: yLine,
+                  stroke: "#2a2f3a" });
+    tag("text", { x: x, y: yName, "text-anchor": "middle", fill: "#e8eaed",
+                  "font-size": 11, "font-weight": 550, "font-family": "system-ui, sans-serif" },
+        esc(b.name));
+    tag("text", { x: x, y: yDia, "text-anchor": "middle", fill: "#8a919e",
+                  "font-size": 9, "font-family": "system-ui, sans-serif" },
+        esc(`Ø ${groupThousands(b.r * 2)} km`));
+  });
+
+  if (opts.oort) {
+    tag("line", { x1: o.x1, y1: o.baseline - 70, x2: o.x1, y2: o.baseline + 70,
+                  stroke: "#8a919e", "stroke-dasharray": "4 5", "stroke-width": 1 });
+    const times = Math.round((OORT_AU / (DWARFS[DWARFS.length - 1].a / AU_MKM)) / 5) * 5;
+    tag("text", { x: o.x1 - 10, y: o.baseline - 84, "text-anchor": "end", fill: "#8a919e",
+                  "font-size": 10.5, "font-family": "system-ui, sans-serif" },
+        esc(`Oort-cloud outer edge ≈ ${groupThousands(OORT_AU)} AU`));
+    tag("text", { x: o.x1 - 10, y: o.baseline - 68, "text-anchor": "end", fill: "#8a919e",
+                  "font-size": 10.5, "font-family": "system-ui, sans-serif" },
+        esc(`≈ ${groupThousands(times)}× further than Eris — off the chart`));
+  }
+
+  tag("text", { x: 34, y: o.H - 26, fill: "#8a919e", "font-size": 10,
+                "font-family": "system-ui, sans-serif" },
+      esc(`default is honest about cheating: log scale on both axes — ` +
+          `the true-scale versions are a lesson in emptiness`));
+  tag("text", { x: o.W - 34, y: o.H - 26, "text-anchor": "end", fill: "#8a919e",
+                "font-size": 10, "font-family": "system-ui, sans-serif" },
+      esc("data: NASA planetary fact sheet · mean radii, semi-major axes"));
+
+  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${o.W} ${o.H}" ` +
+         `width="${o.W}" height="${o.H}" ` +
+         `font-family="system-ui, sans-serif">\n${parts.join("\n")}\n</svg>`;
+}
+
+function buildTableModel(anchor, meters, speedKmh, includeDwarfs, includeOort) {
+  const s = makeScale(anchor, meters);
+  const rows = allBodies(includeDwarfs).map(b => ({
+    name: b.name,
+    size: fmtLen(s.diameterM(b.r * 2)),
+    dist: b.a === 0 ? null : s.distM(b.a),
+    dwarf: DWARFS.some(d => d.name === b.name),
+  }));
+  if (includeOort) {
+    rows.push({ name: "Oort cloud (outer edge)",
+                size: "—", dist: s.distM(OORT_AU * AU_MKM), dwarf: true });
+  }
+  return rows.map(r => ({
+    ...r,
+    distText: r.dist === null ? "—" : fmtLen(r.dist),
+    walk: r.dist === null ? "—" : fmtWalk(r.dist, speedKmh),
+  }));
+}
+/*CORE-END*/
+</script>
+
+<script>
+(function () {
+  const $ = id => document.getElementById(id);
+  const anchorText = () => {
+    const unit = $("anchorUnit").value;
+    const val = $("anchorValue").value || "…";
+    return document.querySelector('input[name="anchor"]:checked').value === "sun"
+      ? `If the Sun were a ball of Ø ${val} ${unit}`
+      : `If 1 AU (Sun→Earth) were ${val} ${unit}`;
+  };
+  function opts() {
+    const [width, height] = $("size").value.split("x").map(Number);
+    return {
+      dwarfs: $("dwarfs").checked, kuiper: $("kuiper").checked,
+      oort: $("oort").checked, trueSizes: $("trueSizes").checked,
+      trueDist: $("trueDist").checked, width, height,
+    };
+  }
+  function render() {
+    const anchor = document.querySelector('input[name="anchor"]:checked').value;
+    const speed = Number($("speed").value) || 5;
+    $("tableTitle").textContent = anchorText();
+    try {
+      const meters = parseLength($("anchorValue").value || "0", $("anchorUnit").value);
+      const tb = $("tbody");
+      tb.innerHTML = buildTableModel(anchor, meters, speed,
+                                     $("dwarfs").checked, $("oort").checked)
+        .map(r => `<tr${r.dwarf ? ' class="dwarf"' : ""}><td>${esc(r.name)}</td>` +
+                  `<td class="num">${esc(r.size)}</td><td class="num">${esc(r.distText)}</td>` +
+                  `<td class="num">${esc(r.walk)}</td></tr>`).join("");
+      $("tfoot").textContent = `walking at ${speed} km/h · log scales cheat, sizes don't`;
+    } catch (e) {
+      $("tbody").innerHTML = "";
+      $("tfoot").textContent = String(e.message || e);
+    }
+    const svg = buildPosterSvg(opts());
+    $("posterWrap").innerHTML = svg;
+    const [w, h] = [$("size").value.split("x")[0], $("size").value.split("x")[1]];
+    $("dims").textContent = `${w} × ${h}px · scales losslessly`;
+    $("download").onclick = () => {
+      const blob = new Blob(['<?xml version="1.0" encoding="UTF-8"?>\n' + svg],
+                            { type: "image/svg+xml" });
+      const a = document.createElement("a");
+      a.href = URL.createObjectURL(blob);
+      a.download = "solarscale-poster.svg";
+      a.click();
+      URL.revokeObjectURL(a.href);
+    };
+  }
+  for (const el of document.querySelectorAll("input, select"))
+    el.addEventListener("input", render);
+  render();
+})();
+</script>
+</body>
+</html>
