@@ -9,6 +9,9 @@ away — and Pluto a 0.4 mm speck 2.1 km down the road. solarscale answers
 that question for any anchor you like, then hands you a printable SVG
 poster.
 
+![solarscale walk-model table and live SVG poster](docs/app.png)
+
+
 **It's one file.** `index.html` runs offline in any browser — copy it to
 a USB stick, open it on a school computer, project it in class. No
 install, no server, no account, nothing leaves the page. Or just use the
